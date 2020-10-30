@@ -1,4 +1,4 @@
-# SwiftUIProjects
+# SwiftUI Projects
 
  ## BullsEye
  - The usage of modifier
@@ -16,12 +16,19 @@ struct ButtonStyle: ViewModifier {
 }
 ```
 
+<image src="images/bullseye.png" width="500"></image>
+<br><br>
+<image src="images/bullseye1.png" width="500"></image>
+
  ## FaveFlicks
 
+- Data Flow in SwiftUI: ObservableObject, @Published, @State, @Binding, @StateObject, @EnvironmentObject, @ObservedObject
+<p float="left">
 <image src="images/faveflicks.png" height="300"></image>
-
- - Data Flow in SwiftUI: ObservableObject, @Published, @State, @Binding, @StateObject, @EnvironmentObject, @ObservedObject
-
+<image src="images/faveflicks2.png" height="300"></image>
+<image src="images/faveflicks3.png" height="300"></image>
+</p>
+ 
  <image src="images/dataflow.png"></image>
 
  ## TaskList
