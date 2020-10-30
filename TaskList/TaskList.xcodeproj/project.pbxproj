@@ -7,6 +7,10 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		0B510F0B254C0FB200E51D67 /* Task.Priority.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0B510F0A254C0FB200E51D67 /* Task.Priority.swift */; };
+		0B510F0F254C196400E51D67 /* TaskStore.PrioritizedTasks.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0B510F0E254C196400E51D67 /* TaskStore.PrioritizedTasks.swift */; };
+		0B510F19254C25B100E51D67 /* SectionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0B510F18254C25B100E51D67 /* SectionView.swift */; };
+		0B510F20254C39F400E51D67 /* Binding.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0B510F1F254C39F400E51D67 /* Binding.swift */; };
 		0B81FCBD2544356100FD561B /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0B81FCBC2544356100FD561B /* AppDelegate.swift */; };
 		0B81FCBF2544356100FD561B /* SceneDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0B81FCBE2544356100FD561B /* SceneDelegate.swift */; };
 		0B81FCC12544356100FD561B /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0B81FCC02544356100FD561B /* ContentView.swift */; };
@@ -34,6 +38,10 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
+		0B510F0A254C0FB200E51D67 /* Task.Priority.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Task.Priority.swift; sourceTree = "<group>"; };
+		0B510F0E254C196400E51D67 /* TaskStore.PrioritizedTasks.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TaskStore.PrioritizedTasks.swift; sourceTree = "<group>"; };
+		0B510F18254C25B100E51D67 /* SectionView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SectionView.swift; sourceTree = "<group>"; };
+		0B510F1F254C39F400E51D67 /* Binding.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Binding.swift; sourceTree = "<group>"; };
 		0B81FCB92544356100FD561B /* TaskList.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = TaskList.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		0B81FCBC2544356100FD561B /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		0B81FCBE2544356100FD561B /* SceneDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SceneDelegate.swift; sourceTree = "<group>"; };
@@ -128,6 +136,8 @@
 			children = (
 				0B81FCDF254439B300FD561B /* Task.swift */,
 				0B81FCE1254439DF00FD561B /* TaskStore.swift */,
+				0B510F0A254C0FB200E51D67 /* Task.Priority.swift */,
+				0B510F0E254C196400E51D67 /* TaskStore.PrioritizedTasks.swift */,
 			);
 			path = Models;
 			sourceTree = "<group>";
@@ -135,6 +145,7 @@
 		0B81FCE72544ECD700FD561B /* Views */ = {
 			isa = PBXGroup;
 			children = (
+				0B510F18254C25B100E51D67 /* SectionView.swift */,
 				0B81FCE52544EC0800FD561B /* NewTaskView.swift */,
 				0B81FCC02544356100FD561B /* ContentView.swift */,
 				0B8E63B5254AC9FB0002F14F /* RowView.swift */,
@@ -146,6 +157,7 @@
 		0B8E63BD254AD3690002F14F /* extension */ = {
 			isa = PBXGroup;
 			children = (
+				0B510F1F254C39F400E51D67 /* Binding.swift */,
 				0B8E63BE254AD37F0002F14F /* ForEach.swift */,
 				0B8E63C4254AD38E0002F14F /* IndexedCollection.swift */,
 			);
@@ -256,10 +268,14 @@
 				0B81FCE2254439DF00FD561B /* TaskStore.swift in Sources */,
 				0B8E63C5254AD38E0002F14F /* IndexedCollection.swift in Sources */,
 				0B81FCE0254439B300FD561B /* Task.swift in Sources */,
+				0B510F20254C39F400E51D67 /* Binding.swift in Sources */,
 				0B8E63BA254AD1000002F14F /* TaskEditingView.swift in Sources */,
 				0B8E63BF254AD37F0002F14F /* ForEach.swift in Sources */,
 				0B8E63B6254AC9FB0002F14F /* RowView.swift in Sources */,
+				0B510F0B254C0FB200E51D67 /* Task.Priority.swift in Sources */,
 				0B81FCE62544EC0800FD561B /* NewTaskView.swift in Sources */,
+				0B510F19254C25B100E51D67 /* SectionView.swift in Sources */,
+				0B510F0F254C196400E51D67 /* TaskStore.PrioritizedTasks.swift in Sources */,
 				0B81FCBD2544356100FD561B /* AppDelegate.swift in Sources */,
 				0B81FCBF2544356100FD561B /* SceneDelegate.swift in Sources */,
 				0B81FCC12544356100FD561B /* ContentView.swift in Sources */,
