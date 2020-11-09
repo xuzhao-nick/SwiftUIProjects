@@ -26,7 +26,7 @@ struct ContentView: View {
 
 
 struct BookRow: View {
-  let book:Book
+  @ObservedObject var book:Book
   @Binding var image: UIImage?
   var body: some View {
     NavigationLink(
@@ -39,12 +39,24 @@ struct BookRow: View {
           size:80.0,
           cornerRadius: 12
         )
-        TitleAndAuthorStack(
-          book: book,
-          titleFont: .title2,
-          authorFont: .title3
-        )
+        VStack(alignment: .leading) {
+          TitleAndAuthorStack(
+            book: book,
+            titleFont: .title2,
+            authorFont: .title3
+          )
+          if !book.microReview.isEmpty {
+            Spacer()
+            Text(book.microReview)
+              .font(.subheadline)
+              .foregroundColor(.secondary)
+          }
+
+        }
         .lineLimit(1)
+        Spacer()
+        BookmarkButton(book: book)
+          .buttonStyle(BorderlessButtonStyle())
         
       }
       .padding(.vertical, 8)

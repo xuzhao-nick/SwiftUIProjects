@@ -8,7 +8,7 @@
 import SwiftUI
 
 struct BookmarkButton: View {
-  var book: Book
+  @ObservedObject var book: Book
   var body: some View {
     let bookmark = "bookmark"
     Button {
@@ -66,16 +66,23 @@ extension Book {
 struct Book_Previews: PreviewProvider {
   static var previews: some View {
     VStack {
-      TitleAndAuthorStack(
-        book: .init(),
-        titleFont: .title,
-        authorFont: .title2)
+      HStack {
+        BookmarkButton(book: .init())
+        BookmarkButton(book: .init(readMe: false))
+        TitleAndAuthorStack(
+          book: .init(),
+          titleFont: .title,
+          authorFont: .title2
+        )
+      }
+      
       Book.Image(uiImage: UIImage(named: "toy"), title: "haha", cornerRadius: 16)
       Book.Image(uiImage: nil, title: "haha", cornerRadius: 16)
       Book.Image(title:"")
       Book.Image(title: "🐰")
     }
     .previewedInAllColorSchemes
+    
     
   }
 }
