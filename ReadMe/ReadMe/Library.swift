@@ -28,47 +28,117 @@
 
 import class UIKit.UIImage
 import Combine
+import SwiftUI
 
 enum Section: CaseIterable {
   case readMe
   case finished
 }
 
+enum SortStyle: CaseIterable {
+  case title
+  case author
+  case manual
+}
 
 final class Library: ObservableObject {
-  var sortedBooks: [Book] { booksCache }
+  @Published var sortStyle: SortStyle = .manual
+  
+  /// The library's books, sorted by its `sortStyle`.
+  private(set) var sortedBooks: [Book] {
+    get {
+      switch sortStyle {
+      case .title:
+        return booksCache.sorted {
+          ["a ", "the "].reduce($0.title.lowercased()) { title, article in
+            title.without(prefix: article) ?? title
+          }
+        }
+      case .author:
+        return booksCache.sorted {
+          PersonNameComponentsFormatter().personNameComponents(from: $0.author) ?? .init()
+        }
+      case .manual:
+        return booksCache
+      }
+    }
+    set {
+      booksCache.removeAll { book in
+        !newValue.contains(book)
+      }
+    }
+  }
   
   var manuallySortedBooks: [Section: [Book]] {
-    Dictionary(grouping: booksCache, by: \.readMe)
-      .mapKeys(Section.init)
+    get {
+      Dictionary(grouping: booksCache, by: \.readMe)
+        .mapKeys(Section.init)
+    }
+    set {
+      booksCache =
+        newValue
+        .sorted { $1.key == .finished }
+          .flatMap{ $0.value }
+    }
+
   }
   
   /// Adds a new book at the start of the livrary's manually-sorted books.
   func addNewBook(book: Book, image: UIImage?) {
     booksCache.insert(book, at: 0)
     uiImages[book] = image
-    storeCancellable(for: book)
+    storeCancellables(for: book)
+  }
+  
+  func deleteBooks(atOffsets offsets: IndexSet, section: Section?) {
+    let booksBeforeDeletion = booksCache
+    
+    if let section = section {
+      manuallySortedBooks[section]?.remove(atOffsets: offsets)
+    } else {
+      sortedBooks.remove(atOffsets: offsets)
+    }
+    for change in booksCache.difference(from: booksBeforeDeletion) {
+      if case .remove(_, let deletedBook, _) = change {
+        uiImages[deletedBook] = nil
+      }
+    }
+  }
+  
+  func moveBooks (
+    oldOffsets: IndexSet, newOffset: Int,
+    section: Section
+  ) {
+    manuallySortedBooks[section]?.move(fromOffsets: oldOffsets, toOffset: newOffset)
   }
   
   @Published var uiImages: [Book: UIImage] = [:]
   
   init() {
-    booksCache.forEach(storeCancellable)
+    booksCache.forEach(storeCancellables)
   }
 
+
   /// An in-memory cache of the manually-sorted books that are persistently stored.
-  @Published private var booksCache: [Book] = [
-    .init(title: "Ein Neues Land", author: "Shaun Tan"),
+  @Published private var booksCache: [Book] =
+  (
+    try? JSONDecoder().decode(
+      [Book].self, from: .init(contentsOf: .jsonURL)
+    )
+  ).filter { _ in !PreviewDevice.inXcode }
+  ??
+  [ .init(title: "Ein Neues Land", author: "Shaun Tan"),
     .init(
       title: "Bosch",
       author: "Laurinda Dixon",
-      microReview: "Earthly Delightful."
+      microReview: "Earthily Delightful."
     ),
+    .init(title: "Dare to Lead", author: "Brené Brown"),
     .init(
-      title: "Dare to Lead",
-      author: "Brené Brown",
-      microReview: "Blastastic"),
-    .init(title: "Blasting for Optimum Health Recipe Book", author: "NutriBullet"),
+      title: "Blasting for Optimum Health Recipe Book",
+      author: "NutriBullet",
+      microReview: "Blastastic!"
+    ),
     .init(title: "Drinking with the Saints", author: "Michael P. Foley"),
     .init(title: "A Guide to Tea", author: "Adagio Teas"),
     .init(title: "The Life and Complete Work of Francisco Goya", author: "P. Gassier & J Wilson"),
@@ -77,6 +147,9 @@ final class Library: ObservableObject {
     .init(title: "Drawing People", author: "Barbara Bradley"),
     .init(title: "What to Say When You Talk to Yourself", author: "Shad Helmstetter")
   ]
+  {
+    didSet { saveBooks() }
+  }
   
   /// Forwards individual book changes to be considered Library changes
   private var cancellables: Set<AnyCancellable> = []
@@ -85,13 +158,26 @@ final class Library: ObservableObject {
 // MARK: - private
 
 private extension Library {
-  func storeCancellable(for book: Book) {
-    book.$readMe.sink { [unowned self] _ in
-      objectWillChange.send()
+  func saveBooks() {
+    DispatchQueue.global().async { [booksCache] in
+      let encoder = JSONEncoder()
+      encoder.outputFormatting = .prettyPrinted
+      try? encoder.encode(booksCache).write(to: .jsonURL, options: .atomicWrite)
     }
-    .store(in: &cancellables)
+  }
+
+  func storeCancellables(for book: Book) {
+    cancellables.formUnion([
+      book.$readMe.sink { [unowned self] _ in
+        manuallySortedBooks = manuallySortedBooks
+      },
+      book.$microReview.sink { [unowned self] _ in
+        saveBooks()
+      }
+    ])
   }
 }
+
 
 private extension Section {
   init(readMe: Bool) {
@@ -110,6 +196,158 @@ private extension Dictionary {
   ) rethrows -> [Transformed: Value] {
     .init(
       uniqueKeysWithValues: try map { (try transform($0.key), $0.value) }
+    )
+  }
+}
+
+
+private extension String {
+  ///- Returns: nil if not prefixed with `prefix`
+  func without(prefix: String) -> Self? {
+    guard hasPrefix(prefix)
+    else { return nil }
+
+    return .init(dropFirst(prefix.count))
+  }
+}
+
+private extension URL {
+  static let jsonURL = Self(fileName: "Books", extension: "json")
+
+  init(fileName: String, extension: String) {
+    self =
+      FileManager.`default`.urls(for: .documentDirectory, in: .userDomainMask)[0]
+      .appendingPathComponent(fileName)
+      .appendingPathExtension(`extension`)
+  }
+}
+
+private extension PreviewDevice {
+  /// Whether this code is running in a SwiftUI preview.
+  static var inXcode: Bool {
+    ProcessInfo.processInfo.environment["XCODE_RUNNING_FOR_PREVIEWS"] == "1"
+  }
+}
+
+private extension Optional {
+  /// Transform `.some` into `.none`, if a condition fails.
+  /// - Parameters:
+  ///   - isSome: The condition that will result in `nil`, when evaluated to `false`.
+  func filter(_ isSome: (Wrapped) throws -> Bool) rethrows -> Self {
+    try flatMap { try isSome($0) ? $0 : nil }
+  }
+}
+
+private extension Sequence {
+  /// Sorted by a common `Comparable` value.
+  func sorted<Comparable: Swift.Comparable>(
+    _ comparable: (Element) throws -> Comparable
+  ) rethrows -> [Element] {
+    try sorted(comparable, <)
+  }
+
+  /// Sorted by a common `Comparable` value, and sorting closure.
+  func sorted<Comparable: Swift.Comparable>(
+    _ comparable: (Element) throws -> Comparable,
+    _ areInIncreasingOrder: (Comparable, Comparable) throws -> Bool
+  ) rethrows -> [Element] {
+    try sorted {
+      try areInIncreasingOrder(comparable($0), comparable($1))
+    }
+  }
+}
+
+// MARK: - PersonNameComponents: Comparable
+
+extension PersonNameComponents: Comparable {
+  public static func < (components0: Self, components1: Self) -> Bool {
+    var fallback: Bool {
+      [\PersonNameComponents.givenName, \.middleName].contains {
+        Optional(
+          (components0[keyPath: $0] ?? "", components1[keyPath: $0] ?? "")
+        )
+        .map { $0.lowercased().isLessThan($1.lowercased(), whenEqual: false) }
+        ?? false
+      }
+    }
+
+    switch (
+      components0.givenName?.lowercased(), components0.familyName?.lowercased(),
+      components1.givenName?.lowercased(), components1.familyName?.lowercased()
+    ) {
+    case let (
+      _, familyName0?,
+      _, familyName1?
+    ):
+      return familyName0.isLessThan(familyName1, whenEqual: fallback)
+    case (
+      _, let familyName0?,
+      let givenName1?, nil
+    ):
+      return familyName0.isLessThan(givenName1, whenEqual: fallback)
+    case (
+      let givenName0?, nil,
+      _, let familyName1?
+    ):
+      return givenName0.isLessThan(familyName1, whenEqual: fallback)
+    default:
+      return fallback
+    }
+  }
+}
+
+private extension Comparable {
+  /// Like `<`, but with a default for the case when `==` evaluates to `true`.
+  func isLessThan(
+    _ comparable: Self,
+    whenEqual default: @autoclosure () -> Bool
+  ) -> Bool {
+    self == comparable
+    ? `default`()
+    : self < comparable
+  }
+}
+
+// MARK: - Published: Codable
+
+import struct Combine.Published
+
+extension Published: Codable where Value: Codable {
+  public func encode(to encoder: Encoder) throws {
+    guard
+      let storageValue =
+        Mirror(reflecting: self).descendant("storage")
+        .map(Mirror.init)?.children.first?.value,
+      let value =
+        storageValue as? Value
+        ?? ((storageValue as? Publisher).map { publisher in
+          Mirror(reflecting: publisher).descendant("subject", "currentValue")
+        }) as? Value
+    else { throw EncodingError.invalidValue(self, codingPath: encoder.codingPath) }
+
+    try value.encode(to: encoder)
+  }
+
+  public init(from decoder: Decoder) throws {
+    self.init(
+      initialValue: try .init(from: decoder)
+    )
+  }
+}
+
+private extension EncodingError {
+  /// `invalidValue` without having to pass a `Context` as an argument.
+  static func invalidValue(
+    _ value: Any,
+    codingPath: [CodingKey],
+    debugDescription: String = .init()
+  ) -> Self {
+    .invalidValue(
+      value,
+      .init(
+        codingPath: codingPath,
+        debugDescription: debugDescription
+      )
     )
   }
 }

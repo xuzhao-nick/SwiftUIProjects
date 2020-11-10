@@ -28,15 +28,30 @@ struct ContentView: View {
           Spacer()
         }
         .buttonStyle(BorderlessButtonStyle())
-        ForEach(Section.allCases, id: \.self) {
-          SectionView(section: $0)
+        switch library.sortStyle {
+        case .title, .author:
+          BookRows(books: library.sortedBooks, section: nil)
+        case .manual:
+          SectionRows()
         }
-        
+
         
 //        ForEach(library.sortedBooks) { book in
 //          BookRow(book: book)
 //        }
       }
+      .toolbar{
+        ToolbarItem(placement: .navigationBarLeading) {
+          Menu("Sort") {
+            Picker("Sort Style", selection: $library.sortStyle) {
+              ForEach(SortStyle.allCases, id: \.self) { sortStyle in
+                Text("\(sortStyle)".capitalized)
+              }
+            }
+          }
+        }
+        ToolbarItem(content: EditButton.init)
+    }
       .navigationBarTitle("My Library")
     }.sheet(isPresented: $addingNewBook) {
       NewBookView()
@@ -45,6 +60,35 @@ struct ContentView: View {
   }
 }
 
+private struct SectionRows: View {
+  @EnvironmentObject var library: Library
+  var body: some View {
+    ForEach(Section.allCases, id: \.self) {
+      SectionView(section: $0)
+    }
+  }
+}
+
+
+private struct BookRows: View {
+  let books: [Book]
+  let section: Section?
+  @EnvironmentObject var library: Library
+  var body: some View {
+    ForEach(books) {
+      BookRow(book: $0)
+    }
+    .onDelete { indexSet in
+      library.deleteBooks(atOffsets: indexSet, section: section)
+    }
+    .onMove { indices, newOffset in
+      library.moveBooks(
+        oldOffsets: indices, newOffset: newOffset,
+        section: section!
+      )
+    }.moveDisabled(section == .none)
+  }
+}
 
 
 private struct BookRow: View {
@@ -113,9 +157,7 @@ private struct SectionView: View {
           }
           .listRowInsets(.init())
       ) {
-        ForEach(books) {
-          BookRow(book: $0)
-        }
+        BookRows(books: books, section: section)
       }
     }
   }
