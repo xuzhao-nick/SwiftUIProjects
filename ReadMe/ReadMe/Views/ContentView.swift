@@ -8,13 +8,13 @@
 import SwiftUI
 
 struct ContentView: View {
-  @State var library = Library()
-  @State var showingAddNewBook = false
+  @EnvironmentObject var library:Library
+  @State var addingNewBook = false
   var body: some View {
     NavigationView {
       List {
         Button{
-          showingAddNewBook = true
+          addingNewBook = true
         } label: {
           Spacer()
           
@@ -30,15 +30,12 @@ struct ContentView: View {
         .buttonStyle(BorderlessButtonStyle())
         
         ForEach(library.sortedBooks) { book in
-          BookRow(
-            book: book,
-            image: $library.uiImages[book]
-          )
+          BookRow(book: book)
         }
       }
       .navigationBarTitle("My Library")
-    }.sheet(isPresented: $showingAddNewBook) {
-      NewBookView(library: library)
+    }.sheet(isPresented: $addingNewBook) {
+      NewBookView()
     }
     
   }
@@ -48,14 +45,14 @@ struct ContentView: View {
 
 struct BookRow: View {
   @ObservedObject var book:Book
-  @Binding var image: UIImage?
+  @EnvironmentObject var library:Library
   var body: some View {
     NavigationLink(
-      destination: DetailView(book: book, image: $image)
+      destination: DetailView(book: book).environmentObject(library)
     ) {
       HStack {
         Book.Image(
-          uiImage: image,
+          uiImage: library.uiImages[book],
           title: book.title,
           size:80.0,
           cornerRadius: 12
@@ -87,7 +84,7 @@ struct BookRow: View {
 
 struct ContentView_Previews: PreviewProvider {
   static var previews: some View {
-    ContentView()
+    ContentView().environmentObject(Library())
       .previewedInAllColorSchemes
   }
 }

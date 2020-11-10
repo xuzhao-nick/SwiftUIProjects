@@ -27,12 +27,12 @@
 /// THE SOFTWARE.
 
 import class UIKit.UIImage
-
-struct Library {
+import Combine
+class Library: ObservableObject {
   var sortedBooks: [Book] { booksCache }
 
   /// An in-memory cache of the manually-sorted books that are persistently stored.
-  private var booksCache: [Book] = [
+  @Published private var booksCache: [Book] = [
     .init(title: "Ein Neues Land", author: "Shaun Tan"),
     .init(
       title: "Bosch",
@@ -53,9 +53,11 @@ struct Library {
     .init(title: "What to Say When You Talk to Yourself", author: "Shad Helmstetter")
   ]
 
-  var uiImages: [Book: UIImage] = [:]
+  @Published var uiImages: [Book: UIImage] = [:]
   
-  mutating func addBook(book: Book) {
-    booksCache.append(book)
+  /// Adds a new book at the start of the livrary's manually-sorted books.
+  func addNewBook(book: Book, image: UIImage?) {
+    booksCache.insert(book, at: 0)
+    uiImages[book] = image
   }
 }
