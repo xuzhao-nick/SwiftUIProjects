@@ -19,8 +19,8 @@ struct DetailView: View {
           titleFont: .title,
           authorFont: .title2
         )
-      }
-      ReviewAndImageStack(book: book, image: $library.uiImages[book])
+      }.padding()
+      ReviewAndImageStack(book: book, image: $library.uiImages[book]).padding()
     }
     
   }
