@@ -6,7 +6,6 @@
 //
 
 import SwiftUI
-
 struct BookmarkButton: View {
   @ObservedObject var book: Book
   var body: some View {
@@ -117,3 +116,6 @@ extension View {
       content: preferredColorScheme)
   }
 }
+
+
+

@@ -54,4 +54,8 @@ struct Library {
   ]
 
   var uiImages: [Book: UIImage] = [:]
+  
+  mutating func addBook(book: Book) {
+    booksCache.append(book)
+  }
 }
