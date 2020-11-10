@@ -28,8 +28,33 @@
 
 import class UIKit.UIImage
 import Combine
-class Library: ObservableObject {
+
+enum Section: CaseIterable {
+  case readMe
+  case finished
+}
+
+
+final class Library: ObservableObject {
   var sortedBooks: [Book] { booksCache }
+  
+  var manuallySortedBooks: [Section: [Book]] {
+    Dictionary(grouping: booksCache, by: \.readMe)
+      .mapKeys(Section.init)
+  }
+  
+  /// Adds a new book at the start of the livrary's manually-sorted books.
+  func addNewBook(book: Book, image: UIImage?) {
+    booksCache.insert(book, at: 0)
+    uiImages[book] = image
+    storeCancellable(for: book)
+  }
+  
+  @Published var uiImages: [Book: UIImage] = [:]
+  
+  init() {
+    booksCache.forEach(storeCancellable)
+  }
 
   /// An in-memory cache of the manually-sorted books that are persistently stored.
   @Published private var booksCache: [Book] = [
@@ -52,12 +77,39 @@ class Library: ObservableObject {
     .init(title: "Drawing People", author: "Barbara Bradley"),
     .init(title: "What to Say When You Talk to Yourself", author: "Shad Helmstetter")
   ]
-
-  @Published var uiImages: [Book: UIImage] = [:]
   
-  /// Adds a new book at the start of the livrary's manually-sorted books.
-  func addNewBook(book: Book, image: UIImage?) {
-    booksCache.insert(book, at: 0)
-    uiImages[book] = image
+  /// Forwards individual book changes to be considered Library changes
+  private var cancellables: Set<AnyCancellable> = []
+}
+
+// MARK: - private
+
+private extension Library {
+  func storeCancellable(for book: Book) {
+    book.$readMe.sink { [unowned self] _ in
+      objectWillChange.send()
+    }
+    .store(in: &cancellables)
+  }
+}
+
+private extension Section {
+  init(readMe: Bool) {
+    self = readMe ? .readMe : .finished
+  }
+}
+
+private extension Dictionary {
+  /// Same values, corresponding to `map`ped keys.
+  ///
+  /// - Parameter transform: Accepts each key of the dictionary as its parameter
+  ///   and returns a key for the new dictionary.
+  /// - Postcondition: The collection of transformed keys must not contain duplicates.
+  func mapKeys<Transformed>(
+    _ transform: (Key) throws -> Transformed
+  ) rethrows -> [Transformed: Value] {
+    .init(
+      uniqueKeysWithValues: try map { (try transform($0.key), $0.value) }
+    )
   }
 }
